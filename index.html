@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>משחק ההנחות</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      direction: rtl;
+      font-family: sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #6200ea;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+    .step {
+      display: none;
+    }
+    .visible {
+      display: block;
+    }
+    a {
+      display: block;
+      margin: 10px 0;
+      color: #6200ea;
+    }
+    #logo {
+      width: 150px;
+      margin: 0 auto 20px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img id="logo" src="logo.jpeg" alt="UpsideDown Logo">
+
+    <div id="step0" class="step visible">
+      <h2>איך קוראים לך?</h2>
+      <input type="text" id="userName" placeholder="שם פרטי או שם משתמש">
+      <br>
+      <button onclick="startGame()">יאללה, נתחיל!</button>
+    </div>
+
+    <div id="step1" class="step">
+      <h2 id="step1Title"></h2>
+      <a href="https://www.instagram.com/upsidedownclinic/profilecard/?igsh=YmRpeXBra212NzN6" target="_blank">עברו לעמוד האינסטגרם</a>
+      <button onclick="markDone(1)">בוצע</button>
+      <button onclick="skipStep(1)">דלג</button>
+    </div>
+
+    <div id="step2" class="step">
+      <h2 id="step2Title"></h2>
+      <a href="https://www.tiktok.com/@upsidedownclinic?_t=ZS-8xuYeiBQFE1&_r=1" target="_blank">עברו לעמוד הטיקטוק</a>
+      <button onclick="markDone(2)">בוצע</button>
+      <button onclick="skipStep(2)">דלג</button>
+    </div>
+
+    <div id="step3" class="step">
+      <h2 id="step3Title"></h2>
+      <a href="https://www.facebook.com/share/1Akt2XrVpS/" target="_blank">עברו לעמוד הפייסבוק</a>
+      <button onclick="markDone(3)">בוצע</button>
+      <button onclick="skipStep(3)">דלג</button>
+    </div>
+
+    <div id="step4" class="step">
+      <h2 id="step4Title"></h2>
+      <a href="https://wa.me/message/GID6GBZKADZPL1" target="_blank">שלחו לנו הודעה בוואטסאפ</a>
+      <button onclick="markDone(4)">בוצע</button>
+      <button onclick="skipStep(4)">דלג</button>
+    </div>
+
+    <div id="step5" class="step">
+      <h2 id="step5Title"></h2>
+      <p>תייגו חבר או כתבו המלצה באחת הפלטפורמות</p>
+      <button onclick="markDone(5)">בוצע</button>
+      <button onclick="skipStep(5)">דלג</button>
+    </div>
+
+    <div id="summary" class="step">
+      <h2>סיכום</h2>
+      <p id="summaryText"></p>
+      <a id="bitLink" href="#" target="_blank">לתשלום בביט</a>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 0;
+    let discount = 0;
+    const totalSteps = 5;
+    let userName = "";
+
+    function startGame() {
+      userName = document.getElementById('userName').value.trim();
+      if (!userName) return alert('נא למלא שם');
+      personalizeSteps();
+      nextStep();
+    }
+
+    function personalizeSteps() {
+      for (let i = 1; i <= totalSteps; i++) {
+        const title = document.getElementById(`step${i}Title`);
+        if (title) title.innerText = `${userName}, שלב ${i}:`;
+      }
+    }
+
+    function markDone(step) {
+      discount += 10;
+      nextStep();
+    }
+
+    function skipStep(step) {
+      nextStep();
+    }
+
+    function nextStep() {
+      document.getElementById(`step${currentStep}`).classList.remove('visible');
+      currentStep++;
+      if (currentStep <= totalSteps) {
+        document.getElementById(`step${currentStep}`).classList.add('visible');
+      } else {
+        showSummary();
+      }
+    }
+
+    function showSummary() {
+      const finalPrice = 150 - discount;
+      document.getElementById('summary').classList.add('visible');
+      document.getElementById('summaryText').innerText = `${userName}, ביצעת ${discount / 10} פעולות! מחיר סופי לתשלום: ₪${finalPrice}`;
+
+      const encodedName = encodeURIComponent(userName);
+      document.getElementById('bitLink').href = `https://pay.beepay.co.il/?amount=${finalPrice}&note=${encodedName}`;
+
+      // שליחת הנתונים ל-Google Sheet דרך Webhook
+     fetch('https://script.google.com/macros/s/AKfycbwKoew0oLK0G82BrGmgZncm2xbfGp_MRiG5j48uyf0kzu5ECGFvCBDVyDwtTd7etPti/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: userName,
+          discount: discount,
+          finalPrice: finalPrice,
+          date: new Date().toISOString()
+        })
+      });
+    }
+  </script>
+</body>
+</html>
